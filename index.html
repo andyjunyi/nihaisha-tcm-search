@@ -126,12 +126,16 @@ header p {
 }
 .result-card .badge {
   display: inline-block;
-  background: var(--accent2);
-  color: #1a1a1a;
   font-size: 0.65rem;
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 4px;
+  background: var(--accent2);
+  color: #1a1a1a;
+}
+.result-card .badge.formula {
+  background: #2d5a1e;
+  color: #a8e6a1;
 }
 .result-card .source {
   font-size: 0.7rem;
@@ -286,6 +290,11 @@ function search(query) {
     if (title.includes(q)) score += 5;
     if (content.includes(q)) score += 2;
     
+    // Boost formula composition entries (have actual recipe)
+    if (sec.boost) score += sec.boost;
+    if (content.includes('**組成**')) score += 5;
+    if (sec.category && sec.category.includes('方劑組成')) score += 4;
+    
     if (score > 0) {
       scored.push({ ...sec, score });
     }
@@ -317,7 +326,7 @@ function search(query) {
       <div class="result-card" onclick="this.querySelector('.snippet').style.maxHeight=this.querySelector('.snippet').style.maxHeight?'none':'none'">
         <div class="title">${title}</div>
         <div class="meta">
-          ${category ? `<span class="badge">${category}</span>` : ''}
+          ${category ? `<span class="badge${category.includes('方劑組成') ? ' formula' : ''}">${category}</span>` : ''}
           <span class="source">📁 ${fileLabel}</span>
         </div>
         <div class="snippet">${highlightText(snippet, q)}</div>
