@@ -117,19 +117,30 @@ header p {
   margin-bottom: 4px;
   line-height: 1.4;
 }
+.result-card .meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.result-card .badge {
+  display: inline-block;
+  background: var(--accent2);
+  color: #1a1a1a;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
 .result-card .source {
   font-size: 0.7rem;
   color: var(--text2);
-  margin-bottom: 8px;
 }
 .result-card .snippet {
   font-size: 0.85rem;
   color: #bbb;
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  line-height: 1.6;
 }
 mark {
   background: var(--highlight);
@@ -298,13 +309,17 @@ function search(query) {
   
   resultsEl.innerHTML = top.map((sec, i) => {
     const title = highlightText(sec.title || '無標題', q);
+    const category = sec.category || '';
     const fileLabel = sec.file ? sec.file.replace('.md', '') : '';
-    const snippet = makeSnippet(sec.content || '', q, 200);
+    const snippet = makeSnippet(sec.content || '', q, 250);
     
     return `
-      <div class="result-card" onclick="this.querySelector('.snippet').style.webkitLineClamp='unset'">
+      <div class="result-card" onclick="this.querySelector('.snippet').style.maxHeight=this.querySelector('.snippet').style.maxHeight?'none':'none'">
         <div class="title">${title}</div>
-        <div class="source">📁 ${fileLabel}</div>
+        <div class="meta">
+          ${category ? `<span class="badge">${category}</span>` : ''}
+          <span class="source">📁 ${fileLabel}</span>
+        </div>
         <div class="snippet">${highlightText(snippet, q)}</div>
       </div>`;
   }).join('');
