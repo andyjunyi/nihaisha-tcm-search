@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>倪海廈中醫查詢</title>
+<style>
+:root {
+  --bg: #0f0f0f;
+  --surface: #1a1a1a;
+  --surface2: #222;
+  --border: #2a2a2a;
+  --text: #ddd;
+  --text2: #999;
+  --accent: #c9a96e;
+  --accent2: #8b6914;
+  --highlight: #3d2e00;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, "Noto Sans TC", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  line-height: 1.6;
+}
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* Header */
+header {
+  text-align: center;
+  padding: 24px 0 8px;
+}
+header h1 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+}
+header p {
+  font-size: 0.8rem;
+  color: var(--text2);
+  margin-top: 4px;
+}
+
+/* Search */
+.search-wrap {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  padding: 12px 0 16px;
+  z-index: 10;
+}
+.search-box {
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0 16px;
+  transition: border-color 0.2s;
+}
+.search-box:focus-within {
+  border-color: var(--accent);
+}
+.search-box input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 1rem;
+  padding: 14px 0;
+  outline: none;
+  font-family: inherit;
+}
+.search-box input::placeholder { color: var(--text2); }
+.search-box .icon {
+  color: var(--text2);
+  font-size: 1.1rem;
+  margin-right: 8px;
+}
+.search-hint {
+  font-size: 0.72rem;
+  color: var(--text2);
+  margin-top: 6px;
+  text-align: center;
+}
+
+/* Results */
+.results-count {
+  font-size: 0.78rem;
+  color: var(--text2);
+  margin-bottom: 12px;
+  display: none;
+}
+.result-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.result-card:hover, .result-card:active {
+  border-color: var(--accent2);
+  background: var(--surface2);
+}
+.result-card .title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+.result-card .source {
+  font-size: 0.7rem;
+  color: var(--text2);
+  margin-bottom: 8px;
+}
+.result-card .snippet {
+  font-size: 0.85rem;
+  color: #bbb;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+mark {
+  background: var(--highlight);
+  color: var(--accent);
+  padding: 1px 2px;
+  border-radius: 2px;
+}
+
+/* Loading */
+.loading {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--text2);
+}
+.spinner {
+  display: inline-block;
+  width: 24px; height: 24px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Empty */
+.empty {
+  text-align: center;
+  padding: 40px 16px;
+  color: var(--text2);
+  font-size: 0.9rem;
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 32px 0;
+  font-size: 0.7rem;
+  color: var(--text2);
+}
+footer a { color: var(--accent2); text-decoration: none; }
+
+/* Mobile */
+@media (max-width: 480px) {
+  .container { padding: 12px; }
+  .result-card { padding: 12px 14px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>📜 倪海廈中醫查詢</h1>
+  <p>搜尋倪師《傷寒論》《金匱要略》《神農本草》《針灸》《臨床醫案》等課程內容</p>
+</header>
+
+<div class="search-wrap">
+  <div class="search-box">
+    <span class="icon">🔍</span>
+    <input type="search" id="q" placeholder="輸入關鍵字搜尋，如：食欲不振、傷寒、桂枝湯…" autofocus>
+  </div>
+  <div class="search-hint">支援中文、英文、方劑名、症狀、經絡等關鍵字搜尋</div>
+</div>
+
+<div id="results-count" class="results-count"></div>
+<div id="results"></div>
+
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+  <p style="margin-top:8px">載入資料庫中…</p>
+</div>
+
+<footer>
+  資料來源：<a href="https://github.com/JuneYaooo/nihaisha-nishi-tcm" target="_blank">倪海廈中醫課程（JuneYaooo/nihaisha-nishi-tcm）</a><br>
+  僅供學習參考，不做個人診斷或醫療建議
+</footer>
+
+</div>
+
+<script>
+// ── Data loading ──
+let SECTIONS = [];
+let loaded = false;
+
+async function loadData() {
+  try {
+    const resp = await fetch(`search_index.json?t=${Date.now()}`);
+    SECTIONS = await resp.json();
+    loaded = true;
+    document.getElementById('loading').style.display = 'none';
+    // Focus search and show initial empty state
+    document.getElementById('results').innerHTML = `
+      <div class="empty">
+        共 ${SECTIONS.length} 個課程段落已載入<br>
+        <span style="font-size:0.8rem">請在上方輸入關鍵字開始搜尋</span>
+      </div>`;
+  } catch (e) {
+    document.getElementById('loading').innerHTML = '<p>載入失敗，請重新整理頁面</p>';
+    console.error(e);
+  }
+}
+
+// ── Search engine ──
+function tokenize(text) {
+  // Split Chinese by individual chars + keep English words
+  const tokens = [];
+  // Extract English/alpha words
+  const alpha = text.match(/[a-zA-Z0-9]+/g) || [];
+  tokens.push(...alpha.map(t => t.toLowerCase()));
+  // Extract Chinese characters (individual)
+  const chinese = text.match(/[\u4e00-\u9fff]/g) || [];
+  tokens.push(...chinese);
+  return tokens;
+}
+
+function search(query) {
+  if (!loaded || !query.trim()) {
+    document.getElementById('results').innerHTML = `
+      <div class="empty">請在上方輸入關鍵字開始搜尋</div>`;
+    document.getElementById('results-count').style.display = 'none';
+    return;
+  }
+
+  const q = query.trim().toLowerCase();
+  const qTokens = tokenize(q);
+  if (qTokens.length === 0) return;
+
+  const scored = [];
+  
+  for (const sec of SECTIONS) {
+    const title = (sec.title || '').toLowerCase();
+    const content = (sec.content || '').toLowerCase();
+    const file = (sec.file || '').toLowerCase();
+    
+    // Score: token matches in title (weight 3), content (weight 1)
+    let score = 0;
+    for (const tok of qTokens) {
+      if (title.includes(tok)) score += 3;
+      if (content.includes(tok)) score += 1;
+    }
+    
+    // Also check for the full query string match
+    if (title.includes(q)) score += 5;
+    if (content.includes(q)) score += 2;
+    
+    if (score > 0) {
+      scored.push({ ...sec, score });
+    }
+  }
+  
+  // Sort by score descending, take top 30
+  scored.sort((a, b) => b.score - a.score);
+  const top = scored.slice(0, 30);
+  
+  // Render
+  const countEl = document.getElementById('results-count');
+  countEl.style.display = 'block';
+  countEl.textContent = `找到 ${scored.length} 個相關段落，顯示前 ${top.length} 筆`;
+  
+  const resultsEl = document.getElementById('results');
+  
+  if (top.length === 0) {
+    resultsEl.innerHTML = `<div class="empty">沒有找到與「${query}」相關的內容<br><span style="font-size:0.8rem">試試其他關鍵字</span></div>`;
+    return;
+  }
+  
+  resultsEl.innerHTML = top.map((sec, i) => {
+    const title = highlightText(sec.title || '無標題', q);
+    const fileLabel = sec.file ? sec.file.replace('.md', '') : '';
+    const snippet = makeSnippet(sec.content || '', q, 200);
+    
+    return `
+      <div class="result-card" onclick="this.querySelector('.snippet').style.webkitLineClamp='unset'">
+        <div class="title">${title}</div>
+        <div class="source">📁 ${fileLabel}</div>
+        <div class="snippet">${highlightText(snippet, q)}</div>
+      </div>`;
+  }).join('');
+}
+
+function makeSnippet(text, query, maxLen) {
+  const q = query.toLowerCase();
+  const idx = text.toLowerCase().indexOf(q);
+  
+  if (idx >= 0) {
+    // Show context around the match
+    const start = Math.max(0, idx - 60);
+    const end = Math.min(text.length, idx + q.length + maxLen);
+    let snip = (start > 0 ? '…' : '') + text.substring(start, end).trim();
+    if (end < text.length) snip += '…';
+    return snip;
+  }
+  
+  // No direct match, check token matches
+  const tok = q.split(/\s+/)[0];
+  const tokIdx = text.toLowerCase().indexOf(tok);
+  if (tokIdx >= 0) {
+    const start = Math.max(0, tokIdx - 40);
+    const end = Math.min(text.length, tokIdx + tok.length + maxLen);
+    let snip = (start > 0 ? '…' : '') + text.substring(start, end).trim();
+    if (end < text.length) snip += '…';
+    return snip;
+  }
+  
+  return text.substring(0, maxLen).trim() + (text.length > maxLen ? '…' : '');
+}
+
+function highlightText(text, query) {
+  if (!query || !text) return text;
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const words = escaped.split(/\s+/).filter(w => w.length > 0);
+  if (words.length === 0) return text;
+  
+  const pattern = new RegExp(`(${words.join('|')})`, 'gi');
+  return text.replace(pattern, '<mark>$1</mark>');
+}
+
+// ── Events ──
+let debounceTimer;
+document.getElementById('q').addEventListener('input', function(e) {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => search(this.value), 200);
+});
+
+// Also search on Enter
+document.getElementById('q').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    clearTimeout(debounceTimer);
+    search(this.value);
+  }
+});
+
+// ── Init ──
+loadData();
+</script>
+</body>
+</html>
